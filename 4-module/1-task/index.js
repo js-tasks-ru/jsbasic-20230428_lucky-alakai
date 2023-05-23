@@ -1,3 +1,4 @@
+//makeFriendsList
 function makeFriendsList(friends) {
   const ul = document.createElement('ul');
 

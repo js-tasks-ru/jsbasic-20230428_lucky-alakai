@@ -4,10 +4,13 @@ function toggleText() {
   const textDiv = document.querySelector('#text');
 
   toggleBtn.addEventListener('click', () => {
-    textDiv.hidden === false ? textDiv.hidden = true : textDiv.hidden = false;
-  })
+    if (textDiv.hidden === false) {
+      textDiv.hidden = true
+    } else {
+      textDiv.hidden = false;
+    }
+  });
 
 
 }
 
-toggleText();

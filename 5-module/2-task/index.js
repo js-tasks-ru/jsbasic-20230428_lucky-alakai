@@ -10,3 +10,4 @@ function toggleText() {
 
 }
 
+toggleText();

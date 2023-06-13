@@ -1,110 +1,99 @@
 import createElement from '../../assets/lib/create-element.js';
 
 export default class Carousel {
-  constructor(slides, product) {
+
+  constructor(slides) {
     this.slides = slides;
-    this.slideCount = this.slides.length;
-    this.current = 0;
-    this.product = product;
-    this.elem = null;
-    this.#render(product);
-    this.#navigate();
+
+    this.currentSlideNumber = 0;
+    this.render();
+    this.addEventListeners();
   }
 
-  #render(product) {
-    const carousel = createElement(`
-      <div class="carousel">
-        <div class="carousel__arrow carousel__arrow_right">
-          <img src="/assets/images/icons/angle-icon.svg" alt="icon">
-        </div>
-        <div class="carousel__arrow carousel__arrow_left">
-          <img src="/assets/images/icons/angle-left-icon.svg" alt="icon">
-        </div>
-
-        <div class="carousel__inner">
-          <div class="carousel__slide" data-id="${this.slides[this.current].id}">
-            <img src="/assets/images/carousel/${this.slides[this.current].image}" class="carousel__img" alt="slide">
-            <div class="carousel__caption">
-              <span class="carousel__price">€${this.slides[this.current].price.toFixed(2)}</span>
-              <div class="carousel__title">${this.slides[this.current].name}</div>
-              <button type="button" class="carousel__button">
-                <img src="/assets/images/icons/plus-icon.svg" alt="icon">
-              </button>
-            </div>
+  render() {
+    this.elem = createElement(`
+        <div class="carousel">
+          <div class="carousel__arrow carousel__arrow_right">
+            <img src="/assets/images/icons/angle-icon.svg" alt="icon" />
           </div>
+          <div class="carousel__arrow carousel__arrow_left">
+            <img src="/assets/images/icons/angle-left-icon.svg" alt="icon" />
+          </div>
+          <div class="carousel__inner"></div>
         </div>
-      </div>
-    `);
-    const button = carousel.querySelector('.carousel__button');
-    button.addEventListener('click', (event) => {
-      this.#addItem(product);
-      console.log(this.status);
-    });
+        `);
 
-    this.elem = carousel;
-  }
-
-  #navigate() {
-    const ARROW_LEFT = this.elem.querySelector('.carousel__arrow_left');
-    const ARROW_RIGHT = this.elem.querySelector('.carousel__arrow_right');
-
-    if (this.current === 0) {
-      ARROW_LEFT.style.display = 'none';
-    }
-
-    if (this.current === this.slideCount - 1) {
-      ARROW_RIGHT.style.display = 'none';
-    }
-
-    ARROW_LEFT.addEventListener('click', () => {
-      if (this.current === 0) {
-        this.current = this.slideCount - 1;
-      } else {
-        this.current--;
-      }
-      const slide = this.slides[this.current];
-      const slideElem = this.elem.querySelector('.carousel__slide');
-      slideElem.setAttribute('data-id', slide.id);
-      slideElem.innerHTML = `
-        <img src="/assets/images/carousel/${slide.image}" class="carousel__img" alt="slide">
+    let slides = this.slides.map(item => createElement(`
+      <div class="carousel__slide" data-id="${item.id}">
+        <img
+          src="/assets/images/carousel/${item.image}"
+          class="carousel__img"
+          alt="slide"
+        />
         <div class="carousel__caption">
-          <span class="carousel__price">€${slide.price.toFixed(2)}</span>
-          <div class="carousel__title">${slide.name}</div>
+          <span class="carousel__price">€${item.price.toFixed(2)}</span>
+          <div class="carousel__title">${item.name}</div>
           <button type="button" class="carousel__button">
-            <img src="/assets/images/icons/plus-icon.svg" alt="icon">
+            <img src="/assets/images/icons/plus-icon.svg" alt="icon" />
           </button>
         </div>
-      `;
-    });
+      </div>`));
 
-    ARROW_RIGHT.addEventListener('click', () => {
-      if (this.current === this.slideCount - 1) {
-        this.current = 0;
-      } else {
-        this.current++;
-      }
-      const slide = this.slides[this.current];
-      const slideElem = this.elem.querySelector('.carousel__slide');
-      slideElem.setAttribute('data-id', slide.id);
-      slideElem.innerHTML = `
-        <img src="/assets/images/carousel/${slide.image}" class="carousel__img" alt="slide">
-        <div class="carousel__caption">
-          <span class="carousel__price">€${slide.price.toFixed(2)}</span>
-          <div class="carousel__title">${slide.name}</div>
-          <button type="button" class="carousel__button">
-            <img src="/assets/images/icons/plus-icon.svg" alt="icon">
-          </button>
-        </div>
-      `;
-    });
+    this.sub('inner').append(...slides);
+
+    this.update();
   }
 
-  #addItem(product) {
-    const event = new CustomEvent("product-add", {
-      detail: this.product.id,
-      bubbles: true
-    });
-    this.elem.dispatchEvent(event);
+  addEventListeners() {
+    this.elem.onclick = ({target}) => {
+      let button = target.closest('.carousel__button');
+      if (button) {
+        let id = target.closest('[data-id]').dataset.id;
+
+        this.elem.dispatchEvent(new CustomEvent('product-add', {
+          detail: id,
+          bubbles: true
+        }));
+      }
+
+      if (target.closest('.carousel__arrow_right')) {
+        this.next();
+      }
+
+      if (target.closest('.carousel__arrow_left')) {
+        this.prev();
+      }
+    };
+  }
+
+  sub(ref) {
+    return this.elem.querySelector(`.carousel__${ref}`);
+  }
+
+  next() {
+    this.currentSlideNumber++;
+    this.update();
+  }
+
+  prev() {
+    this.currentSlideNumber--;
+    this.update();
+  }
+
+  update() {
+    let offset = -this.elem.offsetWidth * this.currentSlideNumber;
+    this.sub('inner').style.transform = `translateX(${offset}px)`;
+
+    if (this.currentSlideNumber == this.slides.length - 1) {
+      this.sub('arrow_right').style.display = 'none';
+    } else {
+      this.sub('arrow_right').style.display = '';
+    }
+
+    if (this.currentSlideNumber == 0) {
+      this.sub('arrow_left').style.display = 'none';
+    } else {
+      this.sub('arrow_left').style.display = '';
+    }
   }
 }
-
